@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container">
+    <h1>Профиль пользователя: {{ user.username }}</h1>
+    <p>Email: {{ user.email }}</p>
+    
+    <h2>Созданные темы</h2>
+    <ul>
+      {% for thread in threads %}
+        <li><a href="{% url 'thread_detail' thread.id %}">{{ thread.title }}</a></li>
+      {% empty %}
+        <li>Темы не найдены.</li>
+      {% endfor %}
+    </ul>
+
+    <h2>Сообщения</h2>
+    <ul>
+      {% for message in messages %}
+        <li>{{ message.text|truncatewords:10 }} - в <a href="{% url 'thread_detail' message.thread.id %}">{{ message.thread.title }}</a></li>
+      {% empty %}
+        <li>Сообщения не найдены.</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}

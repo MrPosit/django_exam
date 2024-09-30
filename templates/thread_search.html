@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container">
+    <h1>Результаты поиска</h1>
+
+    <div class="thread-list">
+      {% for thread in threads %}
+        <div class="thread-item">
+          <h2><a href="{% url 'thread_detail' thread.id %}">{{ thread.title }}</a></h2>
+          <p>Автор: {{ thread.author }} | {{ thread.created_at|date:"d M Y" }} | Лайки: {{ thread.total_likes }}</p>
+          <p>{{ thread.content|truncatewords:30 }}</p>
+        </div>
+      {% empty %}
+        <p>Темы не найдены.</p>
+      {% endfor %}
+    </div>
+
+    <div class="back-button">
+      <a href="{% url 'thread_list' %}" class="btn btn-secondary">Назад на главную</a>
+    </div>
+
+    <div class="pagination">
+      {% if is_paginated %}
+        <span class="step-links">
+          {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; Первая</a>
+            <a href="?page={{ page_obj.previous_page_number }}">Назад</a>
+          {% endif %}
+
+          <span class="current">
+            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
+          </span>
+
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Вперед</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">Последняя &raquo;</a>
+          {% endif %}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

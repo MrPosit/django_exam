@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>{{ thread.title }}</h1>
+    <p>Автор: {{ thread.author }} | {{ thread.created_at|date:"d M Y" }} | Лайки: <span id="like-count">{{ thread.total_likes }}</span>
+        <button id="like-thread" data-thread-id="{{ thread.id }}">
+            {% if user in thread.likes.all %}
+                Убрать лайк
+            {% else %}
+                Поставить лайк
+            {% endif %}
+        </button>
+    </p>
+    <p>{{ thread.content|linebreaks|safe }}</p>
+
+    <div class="message-section">
+        <h2>Сообщения</h2>
+
+        {% for message in messages %}
+        <div class="message-item" id="message-{{ message.id }}">
+            <p>{{ message.author }} | {{ message.created_at|date:"d M Y" }} | Лайки: <span id="message-like-{{ message.id }}">{{ message.total_likes }}</span>
+                <button class="like-message" data-message-id="{{ message.id }}">
+                    {% if user in message.likes.all %}
+                        Убрать лайк
+                    {% else %}
+                        Поставить лайк
+                    {% endif %}
+                </button>
+            </p>
+            <p>{{ message.text|linebreaks|safe }}</p>
+
+            {% if message.children.all %}
+            <div class="replies">
+                <h4>Ответы:</h4>
+                {% for reply in message.children.all %}
+                <div class="reply-item">
+                    <p>{{ reply.author }} | {{ reply.created_at|date:"d M Y" }}</p>
+                    <p>{{ reply.text|linebreaks|safe }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="reply-form">
+                <form method="POST" action="{% url 'message_create' thread.id %}">
+                    {% csrf_token %}
+                    <textarea name="text" placeholder="Ответить..." required></textarea>
+                    <input type="hidden" name="parent_id" value="{{ message.id }}">
+                    <button type="submit">Ответить</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="new-message">
+        <h3>Добавить сообщение</h3>
+        <form method="POST" action="{% url 'message_create' thread.id %}">
+            {% csrf_token %}
+            {{ message_form.as_p }}
+            <button type="submit">Отправить</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.getElementById('like-thread').addEventListener('click', function () {
+        const threadId = this.dataset.threadId;
+        fetch(`/like-thread/${threadId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('like-count').textContent = data.likes;
+            this.textContent = this.textContent === 'Поставить лайк' ? 'Убрать лайк' : 'Поставить лайк';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Не удалось обработать запрос. Попробуйте еще раз.');
+        });
+    });
+
+    document.querySelectorAll('.like-message').forEach(button => {
+        button.addEventListener('click', function () {
+            const messageId = this.dataset.messageId;
+            fetch(`/like-message/${messageId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById(`message-like-${messageId}`).textContent = data.likes;
+                this.textContent = this.textContent === 'Поставить лайк' ? 'Убрать лайк' : 'Поставить лайк';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Не удалось обработать запрос. Попробуйте еще раз.');
+            });
+        });
+    });
+</script>
+{% endblock %}
